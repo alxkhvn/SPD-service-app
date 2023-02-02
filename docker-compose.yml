@@ -43,6 +43,13 @@ services:
       - redis
     depends_on:
       - redis
+      - database
+    environment:
+      - DB_HOST=database
+      - DB_NAME=dbname
+      - DB_USER=dbuser
+      - DB_PASS=pass
+
 
   flower:
     build:
@@ -56,5 +63,6 @@ services:
       - redis
     depends_on:
       - redis
+      - database
     ports:
       - "5555:5555"
