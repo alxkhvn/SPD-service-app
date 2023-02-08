@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.core.cache import cache
 from django.core.validators import MaxValueValidator
 from django.db import models
 from services.tasks import set_price, set_comment
@@ -57,5 +59,17 @@ class Subscription(models.Model):
     plan = models.ForeignKey(Plan, related_name='subscriptions', on_delete=models.PROTECT)
     price = models.PositiveIntegerField(default=0)
     comment = models.CharField(max_length=50, default='')
+
+    def save(self, *args, **kwargs):
+        creating = not bool(self.id)  # Проверяет есть ли объект в базе (если его нету возвращает True)
+        result = super().save(*args, **kwargs)  # Создает объект в базе
+        if creating:
+            set_price.delay(self.id)  # Добавляем прайс если модель только что создалась
+        return result
+
+    def delete(self, *args, **kwargs):
+        cache.delete(settings.PRICE_CACHE_NAME)
+        return super().delete(*args, **kwargs)
+
 
 
